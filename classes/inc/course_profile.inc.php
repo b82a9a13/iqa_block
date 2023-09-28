@@ -24,32 +24,12 @@ if(!isset($_SESSION['iqa_profile_content'])){
             if(!$lib->check_users_access($userid, $courseid)){
                 $returnText->error = "You don't have permission to load the data";
             } else {
-                $array = $lib->get_profile_course_content($userid, $courseid);
-                if($array != []){
-                    $returnText->return = '
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Module Name</th>
-                                    <th>Module Type</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                    ';
-                    foreach($array as $arr){
-                        $returnText->return .= "
-                                <tr>
-                                    <td>$arr[0]</td>
-                                    <td>$arr[1]</td>
-                                    <td>$arr[2]</td>
-                                </tr>
-                        ";
-                    }
-                    $returnText->return .= '
-                            </tbody>
-                        </table>
-                    ';
-                    $returnText->return = str_replace("  ","",$returnText->return);
+                $context = context_course::instance($courseid);
+                if(!has_capability('block/iqa:coach', $context)){
+                    $returnText->error = "You aren't a coach in the course provided";
+                } else {
+                    require_capability('block/iqa:coach', $context);
+                    $returnText->return = $lib->get_profile_course_content($userid, $courseid);
                 }
             }
         }
