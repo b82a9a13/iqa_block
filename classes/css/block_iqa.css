@@ -1,0 +1,6 @@
+.center-div-content{
+    justify-content:center;
+    flex-direction: row;
+    display: flex;
+    flex-wrap: wrap;
+}

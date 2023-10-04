@@ -31,12 +31,38 @@ class lib{
     public function get_user_content(): string{
         global $DB;
         $userid = $this->get_userid();
-        if(!$DB->record_exists('iqa_assignment', [$DB->sql_compare_text('iqaid') => $userid])){
-            return '';
-        } else {
-            return 'You are IQA assigned';
+        $content = '';
+        if($DB->record_exists('iqa_assignment', [$DB->sql_compare_text('iqaid') => $userid])){
+            //Get all the users who have the current user assigned as iqa
+            $records = $DB->get_records_sql('SELECT i.id as id, i.courseid as courseid, c.fullname as fullname, i.learnerid as learnerid, u.firstname as firstname, u.lastname as lastname FROM {iqa_learner} i 
+                LEFT JOIN {course} c ON c.id = i.courseid
+                LEFT JOIN {user} u ON u.id = i.learnerid
+            WHERE i.iqaid = ?',[$userid]);
+            if(count($records) > 0){
+                $array = [[],[]];
+                foreach($records as $record){
+                    if(!in_array([$record->fullname, $record->courseid], $array[0])){
+                        array_push($array[0], [$record->fullname, $record->courseid]);
+                    }
+                    if(!isset($array[1][$record->courseid])){
+                        $array[1][$record->courseid] = [];
+                    }
+                    array_push($array[1][$record->courseid], [$record->firstname.' '.$record->lastname, $record->learnerid]);
+                }
+                $content .= "<div><div class='center-div-content'>";
+                $tmp = "<div class='center-div-content'>";
+                foreach($array[0] as $arra){
+                    $content .= "<button class='btn btn-primary ml-1 mt-1' onclick='iqa_click_course($arra[1])'>$arra[0]</button>";
+                    foreach($array[1][$arra[1]] as $arr){
+                        $tmp .= "<button class='btn btn-primary ml-1 mt-1 iqal iqal-$arra[1]' onclick='iqa_click_learner($arr[1], $arra[1])' style='display:none;'>$arr[0]</button>";
+                    }
+                }
+                $content .= "</div>$tmp</div></div>";
+            } else {
+                $content = 'No IQA assignments available';
+            }
         }
-        return '';
+        return $content;
     }
 
     //get content specific for the id provided as long as the current user has the correct permissions to do so.
@@ -273,5 +299,16 @@ class lib{
 
     public function get_course_content_learner_user($id): string{
         return $this->get_profile_content_course_user($id);
+    }
+
+    //Get content for a specific learner and course
+    public function get_learner_content($learner, $course): string{
+        global $DB;
+        $userid = $this->get_userid();
+        if(!$DB->record_exists('iqa_learner', [$DB->sql_compare_text('iqaid') => $userid, $DB->sql_compare_text('courseid') => $course, $DB->sql_compare_text('learnerid') => $learner])){
+            return '';
+        } else {
+            return $this->get_profile_course_content($learner, $course);
+        }
     }
 }

@@ -73,11 +73,21 @@ class block_iqa extends block_base{
             if(strpos($uri, '/my/index.php')){
                 //Dashboard page
                 if(has_capability('block/iqa:admin', \context_system::instance())){
+                    require_capability('block/iqa:admin', \context_system::instance());
                     $this->content->text .= '<div class="text-center"><button class="btn btn-primary" onclick="window.location.href=`./../local/iqa/admin.php`">IQA Administration</button></div><br>';
                 }
                 $content = $lib->get_user_content();
                 if($content != ''){
-                    $this->content->text .= '<h2 class="text-center">Modules you are assigned IQA for</h2>'.$content.'<div id="iqa_dashboard_content"></div><script src="./../blocks/iqa/amd/src/block_iqa.js"></script>';
+                    $html = '<link rel="stylesheet" type="text/css" href="./../blocks/iqa/classes/css/block_iqa.css">
+                        <h2 class="text-center">Courses which contain learners you are assigned as IQA for</h2>
+                        '.$content.'
+                        <h2 style="display:none;" id="iqa_dashboard_error" class="text-error text-center"></h2>
+                        <div id="iqa_dashboard_content"></div>
+                    <script src="./../blocks/iqa/amd/min/block_iqa.min.js"></script>';
+                    $this->content->text .= str_replace("  ","",$html);
+                    if($content != 'No IQA assignments available'){
+                        $_SESSION['iqa_user_content'] = true;
+                    }
                 }
             }
         }
