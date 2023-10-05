@@ -1,20 +1,20 @@
-function iqa_click_course(id){
-    $(`#iqa_dashboard_error`)[0].style.display = 'none';
-    $(`#iqa_dashboard_content`)[0].style.display = 'none';
-    $(`.iqal`).each(function(){
+function coach_click_course(id){
+    $(`#iqa_dashboard_error_c`)[0].style.display = 'none';
+    $(`#iqa_dashboard_content_c`)[0].style.display = 'none';
+    $(`.clc`).each(function(){
         $(this)[0].style.display = 'none';
     });
-    $(`.iqal-${id}`).each(function(){
+    $(`.clc-${id}`).each(function(){
         $(this)[0].style.display = 'block';
     });
 }
-function iqa_click_learner(id, course){
-    const errorText = $(`#iqa_dashboard_error`)[0];
+function coach_click_learner(id, course){
+    const errorText = $(`#iqa_dashboard_error_c`)[0];
     errorText.style.display = 'none';
-    const content = $(`#iqa_dashboard_content`)[0];
+    const content = $(`#iqa_dashboard_content_c`)[0];
     content.style.display = 'none';
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', './../blocks/iqa/classes/inc/block_iqa.inc.php', true);
+    xhr.open('POST', './../blocks/iqa/classes/inc/block_iqa_coach.inc.php', true);
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     xhr.onload = function(){
         if(this.status == 200){

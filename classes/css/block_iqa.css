@@ -1,3 +1,10 @@
+.section-border{
+    border: 2px solid #95287A;
+    border-radius: 5px;
+    padding: .5rem;
+    background: #F5F5F5;
+    margin: .2rem;
+}
 .center-div-content{
     justify-content:center;
     flex-direction: row;

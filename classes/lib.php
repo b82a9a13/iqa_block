@@ -58,6 +58,7 @@ class lib{
                     }
                 }
                 $content .= "</div>$tmp</div></div>";
+                $content = str_replace("\n","",str_replace("\r","",str_replace("  ","", $content)));
             } else {
                 $content = 'No IQA assignments available';
             }
@@ -116,7 +117,7 @@ class lib{
             }
         }
         $content .= '<h2 id="iqa_block_error" class="text-danger" style="display:none;"></h2></div>';
-        return $content;
+        return str_replace("\n","",str_replace("\r","",str_replace("  ","",$content)));
     }
 
     //get content specific for the user id and course id provided as long as the current user has permissions to do so.
@@ -245,7 +246,7 @@ class lib{
                     </tbody>
                 </table>
             ';
-            $return = str_replace("  ","",$return);
+            $return = str_replace("\n","",str_replace("\r","",str_replace("  ","",$return)));
         } else {
             $return = 'No data available';
         }
@@ -287,7 +288,7 @@ class lib{
                 $return .= "<button class='btn btn-primary ml-1' onclick='iqa_course_content($id, $record->userid)'>".$this->get_user_fullname($record->userid)."</button>";
             }
             $return .= '<h2 id="iqa_block_error" class="text-danger" style="display:none;"></h2></div>';
-            $return = $return;
+            $return = str_replace("\n","",str_replace("\r","", str_replace("  ","",$return)));
         }
         return $return;
     }
@@ -310,5 +311,95 @@ class lib{
         } else {
             return $this->get_profile_course_content($learner, $course);
         }
+    }
+
+    //Get content for the current user as long as they are a coach in a IQA assigned course, and whether
+    public function get_coach_content(): string{
+        global $DB;
+        $userid = $this->get_userid();
+        $records = $DB->get_records_sql('SELECT DISTINCT {role_assignments}.id as id, {enrol}.courseid as courseid, {role_assignments}.roleid as roleid, {user_enrolments}.userid as userid, {course}.fullname as fullname FROM {enrol}
+            INNER JOIN {user_enrolments} ON {user_enrolments}.enrolid = {enrol}.id
+            INNER JOIN {context} ON {context}.instanceid = {enrol}.courseid
+            INNER JOIN {role_assignments} ON {role_assignments}.contextid = {context}.id
+            INNER JOIN {course} ON {course}.id = {enrol}.courseid
+            WHERE {user_enrolments}.userid = {role_assignments}.userid AND {role_assignments}.roleid IN (3,4) AND {user_enrolments}.status = 0 AND {role_assignments}.userid = ?',
+        [$userid]);
+        if(count($records) > 0){
+            $array = [[],[]];
+            foreach($records as $record){
+                if($DB->record_exists('iqa_course', [$DB->sql_compare_text('courseid') => $record->courseid])){
+                    if(!in_array([$record->fullname, $record->courseid], $array[0])){
+                        array_push($array[0], [$record->fullname, $record->courseid]);
+                        $learners = $DB->get_records_sql('SELECT DISTINCT {role_assignments}.id as id, {enrol}.courseid as courseid, {role_assignments}.roleid as roleid, {user_enrolments}.userid as userid, {user}.firstname as firstname, {user}.lastname as lastname FROM {enrol}
+                            INNER JOIN {user_enrolments} ON {user_enrolments}.enrolid = {enrol}.id
+                            INNER JOIN {context} ON {context}.instanceid = {enrol}.courseid
+                            INNER JOIN {role_assignments} ON {role_assignments}.contextid = {context}.id
+                            INNER JOIN {course} ON {course}.id = {enrol}.courseid
+                            LEFT JOIN {user} ON {user}.id = {role_assignments}.userid
+                            WHERE {user_enrolments}.userid = {role_assignments}.userid AND {role_assignments}.roleid = 5 AND {user_enrolments}.status = 0 AND {enrol}.courseid = ?',
+                        [$record->courseid]);
+                        $array[1][count($array[0])-1] = [];
+                        foreach($learners as $learner){
+                            array_push($array[1][count($array[0]) - 1], [$learner->firstname.' '.$learner->lastname, $learner->userid]);
+                        }
+                    }
+                }
+            }
+            $content = '';
+            $tmp = '';
+            for($i = 0; $i < count($array[0]); $i++){
+                $content .= "<button class='btn btn-primary ml-1 mt-1' onclick='coach_click_course(".$array[0][$i][1].")'>".$array[0][$i][0]."</button>";
+                foreach($array[1][$i] as $arra){
+                    $tmp .= "<button class='btn btn-primary ml-1 mt-1 clc-".$array[0][$i][1]." clc' style='display:none;' onclick='coach_click_learner($arra[1], ".$array[0][$i][1].")'>$arra[0]</button>";
+                }
+            }
+            return str_replace("\n","",str_replace("\r","", str_replace("  ","", "<div class='center-div-content'>$content</div><div class='center-div-content'>$tmp</div>")));
+        } else {
+            return 'No data available';
+        }
+    }
+
+    //Get content for a specific learner id and course id for the block on the dasboard
+    public function get_coach_block_content($learnerid, $courseid): string{
+        global $DB;
+        $content = '';
+        if($DB->record_exists('user', [$DB->sql_compare_text('id') => $learnerid]) && $DB->record_exists('course', [$DB->sql_compare_text('id') => $courseid])){
+            $iqa = 'N/A';
+            $iqaid = null;
+            if($DB->record_exists('iqa_learner', [$DB->sql_compare_text('learnerid') => $learnerid, $DB->sql_compare_text('courseid') => $courseid])){
+                $iqaid = $DB->get_record_sql('SELECT iqaid FROM {iqa_learner} WHERE learnerid = ? AND courseid = ?',[$learnerid, $courseid])->iqaid;
+                $iqa = $this->get_user_fullname($iqaid);
+            }
+            $content = '
+                <div>
+                    <table class="table table-bordered table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Learner</th>
+                                <th>Course</th>
+                                <th>IQA</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><a href="./../user/profile.php?id='.$learnerid.'">'.$this->get_user_fullname($learnerid).'</a></td>
+                                <td><a href="./../course/view.php?id='.$courseid.'">'.$this->get_coursename($courseid).'</a></td>';
+            switch($iqaid){
+                case null:
+                    $content .= '<td>'.$iqa.'</td>';
+                    break;
+                default:
+                    $content .= '<td><a href="./../user/profile.php?id='.$iqaid.'" target="_blank">'.$iqa.'</a></td>';
+            }
+            $content .= '
+                            </tr>
+                        </tbody>
+                    </table>
+                    '.$this->get_profile_course_content($learnerid, $courseid).'
+                </div>
+            ';
+            $content = str_replace("\n","",str_replace("\r","",str_replace("  ","",$content)));
+        }
+        return $content;
     }
 }

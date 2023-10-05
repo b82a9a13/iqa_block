@@ -8,5 +8,5 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'block_iqa';
-$plugin->version = 6;
+$plugin->version = 7;
 $plugin->requires = 2016052314; // Moodle version

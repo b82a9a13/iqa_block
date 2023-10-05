@@ -74,19 +74,45 @@ class block_iqa extends block_base{
                 //Dashboard page
                 if(has_capability('block/iqa:admin', \context_system::instance())){
                     require_capability('block/iqa:admin', \context_system::instance());
-                    $this->content->text .= '<div class="text-center"><button class="btn btn-primary" onclick="window.location.href=`./../local/iqa/admin.php`">IQA Administration</button></div><br>';
+                    $this->content->text .= '<div class="text-center section-border"><h2 class="text-center">Administration</h2><button class="btn btn-primary" onclick="window.location.href=`./../local/iqa/admin.php`">IQA Administration</button></div><br>';
                 }
                 $content = $lib->get_user_content();
+                $css = false;
                 if($content != ''){
                     $html = '<link rel="stylesheet" type="text/css" href="./../blocks/iqa/classes/css/block_iqa.css">
+                    <div class="section-border">
                         <h2 class="text-center">Courses which contain learners you are assigned as IQA for</h2>
                         '.$content.'
                         <h2 style="display:none;" id="iqa_dashboard_error" class="text-error text-center"></h2>
                         <div id="iqa_dashboard_content"></div>
+                    </div>
                     <script src="./../blocks/iqa/amd/min/block_iqa.min.js"></script>';
                     $this->content->text .= str_replace("  ","",$html);
                     if($content != 'No IQA assignments available'){
                         $_SESSION['iqa_user_content'] = true;
+                    }
+                    $css = true;
+                }
+                $content = $lib->get_coach_content();
+                if($content != ''){
+                    $html = '';
+                    if(!$css){
+                        $html = '<link rel="stylesheet" type="text/css" href="./../blocks/iqa/classes/css/block_iqa.css">';
+                    } else {
+                        $html = '<br>';
+                    }
+                    $html .= "
+                    <div class='section-border'>
+                        <h2 class='text-center'>Courses that have learners that require IQA</h2>
+                        $content
+                        <h2 style='display:none;' id='iqa_dashboard_error_c' class='text-error text-center'></h2>
+                        <div id='iqa_dashboard_content_c'></div>
+                    </div>
+                    <script src='./../blocks/iqa/amd/min/block_iqa_coach.min.js'></script>
+                    ";
+                    $this->content->text .= str_replace("  ","",$html);
+                    if($content != 'No data available'){
+                        $_SESSION['iqa_coach_content'] = true;
                     }
                 }
             }
