@@ -309,7 +309,26 @@ class lib{
         if(!$DB->record_exists('iqa_learner', [$DB->sql_compare_text('iqaid') => $userid, $DB->sql_compare_text('courseid') => $course, $DB->sql_compare_text('learnerid') => $learner])){
             return '';
         } else {
-            return $this->get_profile_course_content($learner, $course);
+            $content = '
+                <div>
+                    <table class="table table-bordered table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Learner</th>
+                                <th>Course</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><a href="./../user/profile.php?id='.$learner.'">'.$this->get_user_fullname($learner).'</a></td>
+                                <td><a href="./../course/view.php?id='.$course.'">'.$this->get_coursename($course).'</a></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    '.$this->get_profile_course_content($learner, $course).'
+                </div>
+            ';
+            return str_replace("\n","",str_replace("\r","", str_replace("  ","",$content)));
         }
     }
 

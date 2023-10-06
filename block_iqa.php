@@ -70,7 +70,7 @@ class block_iqa extends block_base{
                 }
             }
         } else {
-            if(strpos($uri, '/my/index.php')){
+            if(strpos($uri, '/my/index.php') || strpos($uri, '/my')){
                 //Dashboard page
                 if(has_capability('block/iqa:admin', \context_system::instance())){
                     require_capability('block/iqa:admin', \context_system::instance());
